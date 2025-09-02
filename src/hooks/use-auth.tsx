@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '@/lib/api';
-import { login as apiLogin, register as apiRegister, getMe, AuthResponse } from '@/lib/auth-api';
+import { login as apiLogin, register as apiRegister, getMe, AuthResponse, refreshAccessToken } from '@/lib/auth-api';
 
 interface User {
   id: string;
@@ -30,12 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
 
   const handleAuthResponse = (data: AuthResponse) => {
-    setUser(data.user);
-    localStorage.setItem(TOKEN_KEY, data.accessToken);
-    if (data.refreshToken) {
+    if (data?.accessToken) {
+      localStorage.setItem(TOKEN_KEY, data.accessToken);
+      api.setToken(data.accessToken);
+    }
+    if (data?.refreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
     }
-    api.setToken(data.accessToken);
+    if (data?.user) {
+      setUser(data.user);
+    }
     setStatus('authenticated');
   };
 
@@ -48,27 +52,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let cancelled = false;
+
     const initializeAuth = async () => {
-      const token = localStorage.getItem(TOKEN_KEY);
-      if (token) {
-        api.setToken(token);
-        try {
-          const data = await getMe();
-          handleAuthResponse(data);
-        } catch (error) {
-          logout();
+      try {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const refresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+        if (!token && refresh) {
+          // try refresh first if only refreshToken is present
+          const refreshed = await refreshAccessToken();
+          if (cancelled) return;
+          handleAuthResponse(refreshed);
+          // fetch user if not present in refresh response
+          if (!refreshed.user?.id) {
+            const me = await getMe();
+            if (cancelled) return;
+            handleAuthResponse(me);
+          }
+          return;
         }
-      } else {
-        setStatus('unauthenticated');
+
+        if (token) {
+          api.setToken(token);
+          try {
+            const me = await getMe();
+            if (cancelled) return;
+            handleAuthResponse(me);
+          } catch (e) {
+            // token might be expired, attempt refresh if refresh token exists
+            if (refresh) {
+              const refreshed = await refreshAccessToken();
+              if (cancelled) return;
+              handleAuthResponse(refreshed);
+              if (!refreshed.user?.id) {
+                const me2 = await getMe();
+                if (cancelled) return;
+                handleAuthResponse(me2);
+              }
+            } else {
+              logout();
+            }
+          }
+        } else {
+          setStatus('unauthenticated');
+        }
+      } catch (error) {
+        logout();
       }
     };
+
     initializeAuth();
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === TOKEN_KEY) {
+        const newToken = e.newValue;
+        if (!newToken) {
+          // token removed in another tab
+          logout();
+        } else {
+          api.setToken(newToken);
+          // Do not force fetch /me here to avoid loops; next page action will fetch.
+        }
+      }
+      if (e.key === REFRESH_TOKEN_KEY && !e.newValue) {
+        // refresh token removed: ensure logout
+        logout();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const login = async (identifier: string, password: string) => {
     try {
       const data = await apiLogin(identifier, password);
       handleAuthResponse(data);
+      // Ensure user present
+      if (!data.user?.id) {
+        const me = await getMe();
+        handleAuthResponse(me);
+      }
     } catch (error) {
       logout();
       throw error;

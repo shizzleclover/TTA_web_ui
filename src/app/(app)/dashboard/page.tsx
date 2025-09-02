@@ -10,10 +10,13 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, Users } from 'lucide-react';
+import { LogIn, Users, RotateCcw } from 'lucide-react';
 import Image from 'next/image';
 import { CreateRoomForm } from '@/components/create-room-form';
 import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState } from 'react';
+import { getActiveSession } from '@/lib/games-api';
+import { useRouter } from 'next/navigation';
 
 const publicRooms = [
   {
@@ -47,6 +50,33 @@ const publicRooms = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [code, setCode] = useState('');
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const last = localStorage.getItem('lastRoomCode');
+    if (last) setCode(last);
+
+    (async () => {
+      try {
+        const active = await getActiveSession();
+        if (active?.hasActiveSession && active.room?.roomCode) {
+          setActiveRoom(active.room.roomCode);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const handleJoin = () => {
+    if (!code.trim()) return;
+    router.push(`/quiz/${code.trim()}`);
+  };
+
+  const handleRejoin = () => {
+    if (activeRoom) router.push(`/quiz/${activeRoom}`);
+  };
+
   return (
     <div className="container mx-auto px-4">
       <div className="mb-8">
@@ -77,12 +107,19 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex w-full items-center space-x-2">
-              <Input type="text" placeholder="Enter room code..." />
-              <Button type="submit" variant="secondary">
+              <Input type="text" placeholder="Enter room code..." value={code} onChange={(e) => setCode(e.target.value)} />
+              <Button onClick={handleJoin} variant="secondary">
                 <LogIn className="w-4 h-4 mr-2" />
                 Join
               </Button>
             </div>
+            {activeRoom && (
+              <div className="mt-4">
+                <Button onClick={handleRejoin} variant="outline" className="w-full">
+                  <RotateCcw className="w-4 h-4 mr-2" /> Rejoin Active Room ({activeRoom})
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

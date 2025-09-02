@@ -18,6 +18,7 @@ interface MeResponse {
     message: string;
     data: {
         user: User;
+        tokens?: { accessToken: string; refreshToken?: string };
     }
 }
 
@@ -30,21 +31,40 @@ interface RegisterResponse {
 
 // Normalizer function
 const normalizeAuthResponse = (data: any): AuthResponse => {
-    if (data.data?.user) { // /me response
-        return {
-            ...data,
-            user: data.data.user,
-            accessToken: localStorage.getItem('accessToken') || '', // Assuming token is already set
-        };
-    }
-    if (data.data?.tokens) { // /refresh response
-        return {
-            ...data,
-            user: {} as User, // User data not present in refresh response
-            accessToken: data.data.tokens.accessToken,
+    // If wrapped under data
+    if (data?.data) {
+        const d = data.data;
+        // /me shape
+        if (d.user) {
+            return {
+                message: data.message ?? 'ok',
+                user: d.user,
+                accessToken: d.tokens?.accessToken || localStorage.getItem('accessToken') || '',
+                refreshToken: d.tokens?.refreshToken || localStorage.getItem('refreshToken') || undefined,
+            };
+        }
+        // login/refresh under data.tokens
+        if (d.tokens?.accessToken) {
+            return {
+                message: data.message ?? 'ok',
+                user: d.user ?? ({} as User),
+                accessToken: d.tokens.accessToken,
+                refreshToken: d.tokens.refreshToken,
+            };
         }
     }
-    return data;
+
+    // Flat shape (login/register legacy)
+    if (data?.accessToken || data?.refreshToken || data?.user) {
+        return {
+            message: data.message ?? 'ok',
+            user: data.user,
+            accessToken: data.accessToken || localStorage.getItem('accessToken') || '',
+            refreshToken: data.refreshToken,
+        };
+    }
+
+    return data as AuthResponse;
 };
 
 export const login = async (identifier: string, password: string): Promise<AuthResponse> => {
@@ -61,6 +81,15 @@ export const getMe = async (): Promise<AuthResponse> => {
   return normalizeAuthResponse(responseData);
 };
 
+export const refreshAccessToken = async (): Promise<AuthResponse> => {
+  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+  if (!refreshToken) {
+    throw new Error('No refresh token');
+  }
+  const responseData = await api.post<any>('/api/auth/refresh', { refreshToken });
+  return normalizeAuthResponse(responseData);
+};
+
 export const logout = async (): Promise<{ message: string }> => {
   try {
     return await api.post<{ message: string }>('/api/auth/logout', {});
@@ -70,3 +99,4 @@ export const logout = async (): Promise<{ message: string }> => {
     return { message: "Logged out locally." };
   }
 };
+

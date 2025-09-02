@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Trophy, User } from 'lucide-react';
+import { LayoutDashboard, Trophy, User, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/rooms', label: 'Rooms', icon: List },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/profile', label: 'Profile', icon: User },
 ];

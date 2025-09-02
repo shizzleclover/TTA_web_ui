@@ -39,45 +39,75 @@ function RankBadge({ rank }: { rank: number }) {
 
 export default function LeaderboardPage() {
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-3 sm:px-0">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">Global Leaderboard</CardTitle>
+          <CardTitle className="font-headline text-2xl sm:text-3xl">Global Leaderboard</CardTitle>
           <CardDescription>See how you stack up against the best players in the world.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16 text-center">Rank</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">Total Points</TableHead>
-                <TableHead className="text-right">Games Played</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {/* Mobile list (no horizontal scroll) */}
+          <div className="block sm:hidden">
+            <div className="divide-y">
               {leaderboardData.map((player) => (
-                <TableRow key={player.rank}>
-                  <TableCell className="font-medium text-center">
-                    <div className="flex justify-center items-center">
+                <div key={player.rank} className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 text-center flex-shrink-0">
                       <RankBadge rank={player.rank} />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={`https://picsum.photos/40/40?random=${player.rank}`} data-ai-hint="user avatar"/>
-                        <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{player.name}</span>
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={`https://picsum.photos/40/40?random=${player.rank}`} data-ai-hint="user avatar"/>
+                      <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{player.name}</div>
+                      <div className="text-xs text-muted-foreground">{player.games} games</div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right font-mono">{player.points.toLocaleString()}</TableCell>
-                  <TableCell className="text-right font-mono">{player.games}</TableCell>
-                </TableRow>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono text-sm">{player.points.toLocaleString()}</div>
+                    <div className="text-[10px] text-muted-foreground">points</div>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16 text-center">Rank</TableHead>
+                  <TableHead>Player</TableHead>
+                  <TableHead className="text-right">Total Points</TableHead>
+                  <TableHead className="text-right">Games Played</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaderboardData.map((player) => (
+                  <TableRow key={player.rank}>
+                    <TableCell className="font-medium text-center">
+                      <div className="flex justify-center items-center">
+                        <RankBadge rank={player.rank} />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={`https://picsum.photos/40/40?random=${player.rank}`} data-ai-hint="user avatar"/>
+                          <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{player.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">{player.points.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-mono">{player.games}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
