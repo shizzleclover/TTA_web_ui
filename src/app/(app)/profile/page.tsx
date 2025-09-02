@@ -26,6 +26,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { useAuth } from '@/hooks/use-auth';
 
 const stats = [
   { name: 'Total Points', value: '1,250,890', icon: Trophy },
@@ -72,21 +73,27 @@ const recentActivities = [
 ];
 
 export default function ProfilePage() {
+    const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+  
   return (
     <div className="container mx-auto">
       <Card className="mb-8">
         <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
           <Avatar className="h-24 w-24 border-2 border-primary">
             <AvatarImage
-              src="https://picsum.photos/100/100"
+              src={`https://picsum.photos/seed/${user.id}/100/100`}
               data-ai-hint="user avatar"
               alt="User Avatar"
             />
-            <AvatarFallback>QM</AvatarFallback>
+            <AvatarFallback>{user.username.substring(0,2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="text-center md:text-left">
-            <h1 className="text-3xl font-bold font-headline">QuizMaster</h1>
-            <p className="text-muted-foreground">quizmaster@example.com</p>
+            <h1 className="text-3xl font-bold font-headline">{user.username}</h1>
+            <p className="text-muted-foreground">{user.email}</p>
           </div>
           <Button variant="outline" className="md:ml-auto">
             Edit Profile

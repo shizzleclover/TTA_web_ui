@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import {
   Card,
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { LogIn, Users } from 'lucide-react';
 import Image from 'next/image';
 import { CreateRoomForm } from '@/components/create-room-form';
+import { useAuth } from '@/hooks/use-auth';
 
 const publicRooms = [
   {
@@ -44,11 +46,12 @@ const publicRooms = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   return (
     <div className="container mx-auto px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold font-headline tracking-tight">
-          Welcome, QuizMaster!
+          Welcome, {user?.username || 'QuizMaster'}!
         </h1>
         <p className="text-muted-foreground">Ready for your next challenge?</p>
       </div>
