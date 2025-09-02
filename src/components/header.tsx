@@ -17,8 +17,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { AppSidebar, navItems } from './sidebar';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { navItems } from './sidebar';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +36,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Main navigation menu for the app.</SheetDescription>
+              </SheetHeader>
               <nav className="grid gap-6 text-lg font-medium">
                 <Link
                   href="#"
