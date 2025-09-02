@@ -1,7 +1,6 @@
 // @ts-nocheck
 'use server';
 
-import { generateQuizInvitation } from '@/ai/flows/generate-quiz-invitation';
 import { z } from 'zod';
 
 const CreateRoomSchema = z.object({
@@ -22,6 +21,30 @@ export type FormState = {
   };
 };
 
+// This is a placeholder function. Replace this with a call to your custom backend.
+async function getInvitationFromBackend(data: z.infer<typeof CreateRoomSchema>): Promise<{ invitationMessage: string }> {
+  console.log('Room data to send to backend:', data);
+  // Example:
+  // const response = await fetch('YOUR_BACKEND_URL/create-quiz', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(data),
+  // });
+  // if (!response.ok) {
+  //   throw new Error('Failed to create room on backend');
+  // }
+  // const result = await response.json();
+  // return { invitationMessage: result.invitation };
+
+  // For now, returning a mock invitation.
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const roomCreatorName = 'QuizMaster';
+  return {
+    invitationMessage: `Hey everyone, join ${roomCreatorName}'s quiz room "${data.roomName}" on ${data.scheduledTime}! Get ready for ${data.numberOfQuestions} questions about ${data.questionCategory}. Don't miss out!`,
+  };
+}
+
+
 export async function createRoomAndGetInvitation(
   prevState: FormState,
   formData: FormData
@@ -40,22 +63,14 @@ export async function createRoomAndGetInvitation(
     };
   }
 
-  const data = validatedFields.data;
-
-  // In a real app, this would come from the authenticated user's session
-  const roomCreatorName = 'QuizMaster';
-
   try {
-    const result = await generateQuizInvitation({
-      ...data,
-      roomCreatorName,
-    });
+    const result = await getInvitationFromBackend(validatedFields.data);
     return {
       message: 'Invitation generated successfully!',
       invitation: result.invitationMessage,
     };
   } catch (error) {
-    console.error('AI Invitation Generation Error:', error);
+    console.error('Backend Invitation Generation Error:', error);
     return {
       message: 'An unexpected error occurred while generating the invitation.',
     };

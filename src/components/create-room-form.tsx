@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Copy, Loader2, PartyPopper } from 'lucide-react';
 
 import { createRoomAndGetInvitation, type FormState } from '@/lib/actions';
@@ -38,7 +38,7 @@ function SubmitButton() {
           Generating...
         </>
       ) : (
-        'Create & Generate Invitation'
+        'Create & Get Invitation'
       )}
     </Button>
   );
@@ -46,7 +46,7 @@ function SubmitButton() {
 
 export function CreateRoomForm() {
   const initialState: FormState = { message: '', errors: {} };
-  const [state, dispatch] = useFormState(createRoomAndGetInvitation, initialState);
+  const [state, dispatch] = useActionState(createRoomAndGetInvitation, initialState);
   const [open, setOpen] = useState(false);
   const [questions, setQuestions] = useState(10);
   const { toast } = useToast();

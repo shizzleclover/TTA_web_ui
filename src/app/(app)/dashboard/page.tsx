@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Gamepad2, Users, LogIn } from 'lucide-react';
+import { LogIn, Users } from 'lucide-react';
 import Image from 'next/image';
 import { CreateRoomForm } from '@/components/create-room-form';
 
@@ -45,18 +45,16 @@ const publicRooms = [
 
 export default function DashboardPage() {
   return (
-    <div className="container mx-auto">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold font-headline tracking-tight">
-            Welcome, QuizMaster!
-          </h1>
-          <p className="text-muted-foreground">Ready for your next challenge?</p>
-        </div>
+    <div className="container mx-auto px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold font-headline tracking-tight">
+          Welcome, QuizMaster!
+        </h1>
+        <p className="text-muted-foreground">Ready for your next challenge?</p>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle className="font-headline">Start a New Quiz</CardTitle>
             <CardDescription>
@@ -67,7 +65,7 @@ export default function DashboardPage() {
             <CreateRoomForm />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-1">
+        <Card>
           <CardHeader>
             <CardTitle className="font-headline">Join a Room</CardTitle>
             <CardDescription>
