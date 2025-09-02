@@ -2,6 +2,7 @@
 'use server';
 
 import { z } from 'zod';
+import { getMe } from './auth-api';
 
 const CreateRoomSchema = z.object({
   roomName: z.string().min(3, 'Room name must be at least 3 characters'),
@@ -38,7 +39,19 @@ async function getInvitationFromBackend(data: z.infer<typeof CreateRoomSchema>):
 
   // For now, returning a mock invitation.
   await new Promise(resolve => setTimeout(resolve, 1000));
-  const roomCreatorName = 'QuizMaster';
+  
+  let roomCreatorName = 'QuizMaster';
+
+  try {
+    const meResponse = await getMe();
+    if(meResponse.user) {
+        roomCreatorName = meResponse.user.username;
+    }
+  } catch(e) {
+    // Could not get user, proceed with default name
+    console.error("Could not fetch user to create invitation", e)
+  }
+
   return {
     invitationMessage: `Hey everyone, join ${roomCreatorName}'s quiz room "${data.roomName}" on ${data.scheduledTime}! Get ready for ${data.numberOfQuestions} questions about ${data.questionCategory}. Don't miss out!`,
   };
