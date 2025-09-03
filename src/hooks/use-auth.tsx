@@ -79,18 +79,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const me = await getMe();
             if (cancelled) return;
             handleAuthResponse(me);
-          } catch (e) {
+          } catch (e: any) {
+            console.log('Auth initialization: getMe failed, attempting refresh:', e.message);
             // token might be expired, attempt refresh if refresh token exists
             if (refresh) {
-              const refreshed = await refreshAccessToken();
-              if (cancelled) return;
-              handleAuthResponse(refreshed);
-              if (!refreshed.user?.id) {
-                const me2 = await getMe();
+              try {
+                const refreshed = await refreshAccessToken();
                 if (cancelled) return;
-                handleAuthResponse(me2);
+                handleAuthResponse(refreshed);
+                if (!refreshed.user?.id) {
+                  const me2 = await getMe();
+                  if (cancelled) return;
+                  handleAuthResponse(me2);
+                }
+              } catch (refreshError: any) {
+                console.log('Auth initialization: refresh failed:', refreshError.message);
+                logout();
               }
             } else {
+              console.log('Auth initialization: no refresh token, logging out');
               logout();
             }
           }
@@ -130,15 +137,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (identifier: string, password: string) => {
     try {
+      console.log('Auth context: Starting login process');
       const data = await apiLogin(identifier, password);
+      console.log('Auth context: Login API call successful', data);
       handleAuthResponse(data);
+      // Ensure api client has token immediately
+      if (data.accessToken) {
+        api.setToken(data.accessToken);
+      }
       // Ensure user present
       if (!data.user?.id) {
+        console.log('Auth context: Fetching user details from /me');
         const me = await getMe();
         handleAuthResponse(me);
       }
+      console.log('Auth context: Login process completed successfully');
     } catch (error) {
-      logout();
+      console.error('Auth context: Login failed', error);
+      // Don't call logout() here as it might cause unwanted redirects
+      // Just throw the error and let the UI handle it
       throw error;
     }
   };

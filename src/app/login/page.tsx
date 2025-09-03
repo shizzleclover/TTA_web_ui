@@ -30,9 +30,20 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(identifier, password);
-      router.push('/dashboard');
+      console.log('Attempting login with:', { identifier, password: '***' });
+      const result = await login(identifier, password);
+      console.log('Login successful:', result);
+      toast({
+        variant: 'success',
+        title: 'Login Successful',
+        description: 'Redirecting to dashboard...',
+      });
+      // Add a small delay to see the success message
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Login Failed',

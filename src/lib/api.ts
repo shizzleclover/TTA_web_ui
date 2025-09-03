@@ -1,6 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 let accessToken: string | null = null;
+// Initialize token from storage on module load (client-side)
+if (typeof window !== 'undefined') {
+  try {
+    accessToken = localStorage.getItem('accessToken');
+  } catch {
+    accessToken = null;
+  }
+}
 let refreshingTokenPromise: Promise<string> | null = null;
 
 const getRefreshToken = (): string | null => {
@@ -58,6 +66,9 @@ const request = async <T>(
   const headers = new Headers(options.headers || {});
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`);
+    console.log('API request with token:', { endpoint, hasToken: !!accessToken, tokenLength: accessToken.length });
+  } else {
+    console.log('API request without token:', { endpoint });
   }
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
@@ -68,7 +79,10 @@ const request = async <T>(
     headers,
   });
 
-  if (response.status === 401 && !isRetry) {
+  // Don't try to refresh token for auth endpoints (login, register, refresh)
+  const isAuthEndpoint = endpoint.includes('/auth/');
+  
+  if (response.status === 401 && !isRetry && !isAuthEndpoint) {
     try {
       if (!refreshingTokenPromise) {
         refreshingTokenPromise = refreshToken();
@@ -81,18 +95,42 @@ const request = async <T>(
       return await request<T>(endpoint, { ...options, headers }, true);
     } catch (error) {
       console.error("Token refresh failed:", error);
-      // If refresh fails, redirect to login by clearing state
+      // If refresh fails, clear tokens and let caller handle UI navigation
       clearTokens();
-      if (typeof window !== 'undefined') {
-         window.location.href = '/login';
-      }
       throw new Error("Session expired. Please log in again.");
     }
   }
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || 'An API error occurred');
+    let errorMessage = 'An API error occurred';
+    let errorData: any = null;
+    
+    try {
+      const responseText = await response.text();
+      console.log('Raw error response:', responseText);
+      
+      if (responseText.trim()) {
+        errorData = JSON.parse(responseText);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse error response:', parseError);
+    }
+    
+    console.error('API Error Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: `${API_URL}${endpoint}`,
+      error: errorData || 'Empty or invalid response',
+      hasErrorData: !!errorData
+    });
+    
+    if (errorData) {
+      errorMessage = errorData.error?.message || errorData.message || errorMessage;
+    } else {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    
+    throw new Error(errorMessage);
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {

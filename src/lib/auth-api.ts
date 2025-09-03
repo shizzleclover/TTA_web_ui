@@ -68,8 +68,20 @@ const normalizeAuthResponse = (data: any): AuthResponse => {
 };
 
 export const login = async (identifier: string, password: string): Promise<AuthResponse> => {
-  const responseData = await api.post<AuthResponse>('/api/auth/login', { username: identifier, password });
-  return normalizeAuthResponse(responseData);
+  // Try to determine if identifier is email or username
+  const isEmail = identifier.includes('@');
+  const body = isEmail 
+    ? { email: identifier, password }
+    : { username: identifier, password };
+  
+  console.log('Login request body:', body);
+  try {
+    const responseData = await api.post<AuthResponse>('/api/auth/login', body);
+    return normalizeAuthResponse(responseData);
+  } catch (error: any) {
+    console.error('Login API error details:', error);
+    throw error;
+  }
 };
 
 export const register = async (username: string, password: string, email: string): Promise<RegisterResponse> => {

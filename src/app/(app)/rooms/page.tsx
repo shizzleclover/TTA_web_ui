@@ -34,7 +34,7 @@ export default function RoomsPage() {
       const roomsList = res?.rooms || [];
       setRooms(reset ? roomsList : [...rooms, ...roomsList]);
       setSkip((reset ? 0 : skip) + roomsList.length);
-      setHasMore(Boolean(res?.pagination?.hasMore));
+      setHasMore(roomsList.length === limit); // Simple pagination check
     } catch (e: any) {
       setError(e?.message || 'Failed to load rooms');
     } finally {
@@ -50,7 +50,7 @@ export default function RoomsPage() {
   const handleJoinPrivateRoom = () => {
     const trimmedCode = privateRoomCode.trim().toUpperCase();
     if (trimmedCode.length === 6) {
-      router.push(`/quiz/${trimmedCode}`);
+      router.push(`/lobby/${trimmedCode}`);
     }
   };
 
@@ -112,23 +112,27 @@ export default function RoomsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(rooms || []).map((r) => (
-          <Card key={r._id}>
+          <Card key={r.roomCode}>
             <CardHeader>
-              <CardTitle className="font-headline">Room {r.roomCode}</CardTitle>
-              <CardDescription>Status: {r.gameState.status}</CardDescription>
+              <CardTitle className="font-headline">
+                {r.gameConfiguration.roomName || `Room ${r.roomCode}`}
+              </CardTitle>
+              <CardDescription>
+                Status: {r.gameState.status} • {r.gameConfiguration.isPrivate ? '🔒 Private' : '🌐 Public'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-between text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 <span>
-                  {r.players?.length || 0} / {r.gameConfiguration?.maxPlayers || 0}
+                  {r.playerCount || 0} / {r.gameConfiguration?.maxPlayers || 0}
                 </span>
               </div>
               <span>{r.gameConfiguration?.questionCount || 0} questions</span>
             </CardContent>
             <CardFooter>
               <Button className="w-full" asChild>
-                <Link href={`/quiz/${r.roomCode}`}>Join Room</Link>
+                <Link href={`/lobby/${r.roomCode}`}>Join Room</Link>
               </Button>
             </CardFooter>
           </Card>

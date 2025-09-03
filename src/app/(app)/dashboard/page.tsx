@@ -61,8 +61,8 @@ export default function DashboardPage() {
     (async () => {
       try {
         const active = await getActiveSession();
-        if (active?.hasActiveSession && active.room?.roomCode) {
-          setActiveRoom(active.room.roomCode);
+        if (active?.hasActiveSession && active.gameSession?.roomCode) {
+          setActiveRoom(active.gameSession.roomCode);
         }
       } catch {}
     })();
@@ -70,11 +70,11 @@ export default function DashboardPage() {
 
   const handleJoin = () => {
     if (!code.trim()) return;
-    router.push(`/quiz/${code.trim()}`);
+    router.push(`/lobby/${code.trim()}`);
   };
 
   const handleRejoin = () => {
-    if (activeRoom) router.push(`/quiz/${activeRoom}`);
+    if (activeRoom) router.push(`/lobby/${activeRoom}`);
   };
 
   return (

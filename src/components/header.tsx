@@ -35,6 +35,8 @@ export function Header() {
     router.push('/login');
   };
 
+  const initials = ((user?.username || user?.email || '').slice(0, 2).toUpperCase()) || 'U';
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
        <Sheet>
@@ -73,22 +75,22 @@ export function Header() {
             </SheetContent>
           </Sheet>
       <div className="flex flex-1 items-center justify-end gap-4">
-        {user && (
+        {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={`https://picsum.photos/seed/${user.id}/100/100`} data-ai-hint="user avatar" alt="User Avatar" />
-                  <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.username}</p>
+                  <p className="text-sm font-medium leading-none">{user.username || user.email || 'Guest'}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
+                    {user.email || ''}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -106,6 +108,15 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/login">Login</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/signup">Sign up</Link>
+            </Button>
+          </div>
         )}
       </div>
     </header>

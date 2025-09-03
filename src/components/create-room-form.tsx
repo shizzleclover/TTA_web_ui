@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { createRoom } from '@/lib/games-api';
 import { useRouter } from 'next/navigation';
@@ -40,6 +41,9 @@ export function CreateRoomForm() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [timeSec, setTimeSec] = useState(15);
   const [roomName, setRoomName] = useState<string>('');
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>('');
+  const [allowSpectators, setAllowSpectators] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -57,19 +61,20 @@ export function CreateRoomForm() {
           timePerQuestion: timeSec, // seconds
           categories: [category],
           difficultyRange: [difficulty, 'medium'],
-          isPrivate: false,
-          allowSpectators: true,
+          isPrivate,
+          allowSpectators,
+          roomName: roomName.trim() || undefined,
+          password: isPrivate && password.trim() ? password.trim() : undefined,
         },
       });
 
-      const anyRes = res as any;
-      const code = anyRes?.data?.roomCode || anyRes?.roomCode || anyRes?.data?.gameSession?.roomCode || anyRes?.room?.roomCode;
-      if (!code) throw new Error('No room code returned');
+      const roomCode = res.data?.roomCode;
+      if (!roomCode) throw new Error('No room code returned');
 
-      localStorage.setItem('lastRoomCode', code);
-      toast({ title: 'Room created', description: `Room code: ${code}` });
+      localStorage.setItem('lastRoomCode', roomCode);
+      toast({ title: 'Room created', description: `Room code: ${roomCode}` });
       setOpen(false);
-      router.push(`/quiz/${code}`);
+      router.push(`/lobby/${roomCode}`);
     } catch (e: any) {
       const msg = e?.message || 'Failed to create room';
       setError(msg);
@@ -100,6 +105,48 @@ export function CreateRoomForm() {
                 </Label>
                 <div className="col-span-3">
                   <Input id="roomName" value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder="e.g. Marvel Movie Night" />
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  Private Room
+                </Label>
+                <div className="col-span-3 flex items-center space-x-2">
+                  <Switch
+                    id="isPrivate"
+                    checked={isPrivate}
+                    onCheckedChange={setIsPrivate}
+                  />
+                  <Label htmlFor="isPrivate">Require password to join</Label>
+                </div>
+              </div>
+              {isPrivate && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="password" className="text-right">
+                    Password
+                  </Label>
+                  <div className="col-span-3">
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      placeholder="Enter room password" 
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  Allow Spectators
+                </Label>
+                <div className="col-span-3 flex items-center space-x-2">
+                  <Switch
+                    id="allowSpectators"
+                    checked={allowSpectators}
+                    onCheckedChange={setAllowSpectators}
+                  />
+                  <Label htmlFor="allowSpectators">Let users watch without playing</Label>
                 </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
